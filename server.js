@@ -5,19 +5,15 @@ require('dotenv').config();
 
 const app = express();
 
-
 app.use(express.json());
 app.use(cors());
-
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/biko_music')
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-
 const Track = mongoose.model('Track', new mongoose.Schema({ title: String, url: String }));
 const Video = mongoose.model('Video', new mongoose.Schema({ title: String, youtubeId: String, thumbnail: String }));
-
 
 app.get('/api/tracks', async (req, res) => {
   try { 
@@ -51,7 +47,6 @@ app.delete('/api/tracks/:id', async (req, res) => {
   }
 });
 
-
 app.get('/api/videos', async (req, res) => {
   try { 
     const videos = await Video.find();
@@ -61,19 +56,36 @@ app.get('/api/videos', async (req, res) => {
   }
 });
 
+
 app.post('/api/videos', async (req, res) => {
   try {
     const { title, videoId, youtubeId, url } = req.body;
-    let incomingUrl = videoId || youtubeId || url; 
     
+   
+    let incomingUrl = videoId || youtubeId || url;
+
     if (!incomingUrl || !title) {
       return res.status(400).json({ error: "عنوان الفيديو والرابط مطلوبين" });
     }
 
+    incomingUrl = incomingUrl.trim();
+    let finalYoutubeId = "";
+
+   
+    if (incomingUrl.length === 11 && !incomingUrl.includes('/') && !incomingUrl.includes('.')) {
+      
+      finalYoutubeId = incomingUrl;
+    } else {
+    
+      const regExp = /^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/|shorts\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*/;
+      const match = incomingUrl.match(regExp);
+      finalYoutubeId = (match && match[1].length === 11) ? match[1] : "";
+    }
+
   
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = incomingUrl.match(regExp);
-    const finalYoutubeId = (match && match[2].length === 11) ? match[2] : incomingUrl;
+    if (!finalYoutubeId || finalYoutubeId.length !== 11) {
+      return res.status(400).json({ error: "لم نتمكن من التعرف على كود الفيديو، تأكد من الرابط" });
+    }
 
     const thumbnail = `https://img.youtube.com/vi/${finalYoutubeId}/hqdefault.jpg`;
     const newVideo = new Video({ title, youtubeId: finalYoutubeId, thumbnail });
@@ -94,7 +106,6 @@ app.delete('/api/videos/:id', async (req, res) => {
   }
 });
 
-
 app.post('/api/admin/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -106,7 +117,6 @@ app.post('/api/admin/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
