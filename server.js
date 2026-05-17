@@ -63,11 +63,9 @@ app.get('/api/videos', async (req, res) => {
 
 app.post('/api/videos', async (req, res) => {
   try {
-    const { title, videoId, youtubeId } = req.body;
+    const { title, videoId, youtubeId, url } = req.body;
+    let incomingUrl = videoId || youtubeId || url; 
     
-    
-    let incomingUrl = videoId || youtubeId;
-
     if (!incomingUrl || !title) {
       return res.status(400).json({ error: "عنوان الفيديو والرابط مطلوبين" });
     }
