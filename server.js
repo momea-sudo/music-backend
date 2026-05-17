@@ -56,8 +56,8 @@ app.delete('/api/videos/:id', async (req, res) => {
 
 app.post('/api/admin/login', async (req, res) => {
   const { email, password } = req.body;
-  const adminEmail = process.env.ADMIN_EMAIL || 'bikomusic3@gmail.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'Aass1122@@';
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
 
   if (email === adminEmail && password === adminPassword) {
     return res.json({ success: true, token: 'biko_fix_token_2026' });
