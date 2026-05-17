@@ -1,10 +1,11 @@
-const express = require('express');
+const express = require('require'); // تأكد إنها express كالتالي:
+const expressApp = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-const app = express();
-app.use(express.json());
+const app = expressApp();
+app.use(expressApp.json());
 app.use(cors());
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/biko_music')
@@ -14,6 +15,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/biko_music'
 const Track = mongoose.model('Track', new mongoose.Schema({ title: String, url: String }));
 const Video = mongoose.model('Video', new mongoose.Schema({ title: String, youtubeId: String, thumbnail: String }));
 
+// --- الروابط الخاصة بالتراكات ---
 app.get('/api/tracks', async (req, res) => {
   try { res.json(await Track.find()); } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -27,9 +29,7 @@ app.post('/api/tracks', async (req, res) => {
     const newTrack = new Track({ title, url });
     await newTrack.save();
     res.status(201).json(newTrack);
-  } catch (err) { 
-    res.status(400).json({ error: err.message }); 
-  }
+  } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 app.delete('/api/tracks/:id', async (req, res) => {
@@ -39,6 +39,7 @@ app.delete('/api/tracks/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// --- الروابط الخاصة بالفيديوهات ---
 app.get('/api/videos', async (req, res) => {
   try { res.json(await Video.find()); } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -46,19 +47,14 @@ app.get('/api/videos', async (req, res) => {
 app.post('/api/videos', async (req, res) => {
   try {
     const { title, videoId, youtubeId: oldYoutubeId } = req.body;
-    
-    
     let incomingUrl = videoId || oldYoutubeId;
 
     if (!incomingUrl || !title) {
       return res.status(400).json({ error: "عنوان الفيديو والرابط مطلوبين" });
     }
 
-    
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = incomingUrl.match(regExp);
-    
-    
     const finalYoutubeId = (match && match[2].length === 11) ? match[2] : incomingUrl;
 
     const thumbnail = `https://img.youtube.com/vi/${finalYoutubeId}/hqdefault.jpg`;
@@ -66,9 +62,7 @@ app.post('/api/videos', async (req, res) => {
     
     await newVideo.save();
     res.status(201).json(newVideo);
-  } catch (err) { 
-    res.status(400).json({ error: err.message }); 
-  }
+  } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 app.delete('/api/videos/:id', async (req, res) => {
@@ -78,6 +72,7 @@ app.delete('/api/videos/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// --- الدخول للأدمن ---
 app.post('/api/admin/login', async (req, res) => {
   const { email, password } = req.body;
   const adminEmail = process.env.ADMIN_EMAIL;
