@@ -59,33 +59,41 @@ app.get('/api/videos', async (req, res) => {
 
 app.post('/api/videos', async (req, res) => {
   try {
-    // 1. اختبار للـ Body: بنشوف الداتا اللي جاية من الفرونتد أصلاً
-    console.log("=== داتا الفيديوهات اللي وصلت للسيرفر ===", req.body);
-
     const { title, videoId, youtubeId, url } = req.body;
-    let myId = videoId || youtubeId || url;
+    
+   
+    let incomingUrl = videoId || youtubeId || url;
 
-    // 2. لو الداتا مجتش خالص من الفرونتد
-    if (!title || !myId) {
-      return res.status(400).json({ error: "❌ اختبار: الفرونتد مبعتش عنوان أو رابط أصلاً!" });
+    if (!incomingUrl || !title) {
+      return res.status(400).json({ error: "عنوان الفيديو والرابط مطلوبين" });
     }
 
-    // 3. هنقصه يدوي وبسيط جداً بدون تعقيد
-    if (myId.includes('v=')) myId = myId.split('v=')[1].split('&')[0];
-    else if (myId.includes('youtu.be/')) myId = myId.split('youtu.be/')[1].split('?')[0];
+    incomingUrl = incomingUrl.trim();
+    let finalYoutubeId = "";
 
-    const thumbnail = `https://img.youtube.com/vi/${myId}/hqdefault.jpg`;
+   
+    if (incomingUrl.length === 11 && !incomingUrl.includes('/') && !incomingUrl.includes('.')) {
+      
+      finalYoutubeId = incomingUrl;
+    } else {
     
-    // 4. محاولة الحفظ في المونجو
-    const newVideo = new Video({ title, youtubeId: myId, thumbnail });
+      const regExp = /^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/|shorts\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*/;
+      const match = incomingUrl.match(regExp);
+      finalYoutubeId = (match && match[1].length === 11) ? match[1] : "";
+    }
+
+  
+    if (!finalYoutubeId || finalYoutubeId.length !== 11) {
+      return res.status(400).json({ error: "لم نتمكن من التعرف على كود الفيديو، تأكد من الرابط" });
+    }
+
+    const thumbnail = `https://img.youtube.com/vi/${finalYoutubeId}/hqdefault.jpg`;
+    const newVideo = new Video({ title, youtubeId: finalYoutubeId, thumbnail });
+    
     await newVideo.save();
-
-    // 5. رسالة نجاح واضحة جداً عشان نتأكد إن النسخة الجديدة اشتغلت
-    res.status(201).json({ success: "🎉 مبروك يا موميا التعديل الجديد اشتغل وقفلنا اللعبة!", data: newVideo });
-
+    res.status(201).json(newVideo);
   } catch (err) { 
-    // لو العيب من المونجو والداتابيز هيبان هنا فوراً بـ 400 ورسالة واضحة
-    res.status(400).json({ error: "❌ المونجو رفضت تحفظ بسبب: " + err.message }); 
+    res.status(400).json({ error: err.message }); 
   }
 });
 
