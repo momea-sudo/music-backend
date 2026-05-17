@@ -43,7 +43,7 @@ app.post('/api/videos', async (req, res) => {
     const thumbnail = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
     const newVideo = new Video({ title, youtubeId, thumbnail });
     await newVideo.save();
-    res.status(201).json(newVideo); // يرجع البيانات للفرونتد كاملة بـ الـ _id
+    res.status(201).json(newVideo);
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
