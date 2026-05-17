@@ -1,4 +1,4 @@
-const expressApp = require('express');
+const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
@@ -15,35 +15,7 @@ const Track = mongoose.model('Track', new mongoose.Schema({ title: String, url: 
 const Video = mongoose.model('Video', new mongoose.Schema({ title: String, youtubeId: String, thumbnail: String }));
 
 
-app.get('/api/tracks', async (req, res) => {
-  try { res.json(await Track.find()); } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.post('/api/tracks', async (req, res) => {
-  try {
-    const { title, url } = req.body;
-    if (!title || !url) {
-      return res.status(400).json({ error: "اسم التراك ورابط الـ MP3 مطلوبين" });
-    }
-    const newTrack = new Track({ title, url });
-    await newTrack.save();
-    res.status(201).json(newTrack);
-  } catch (err) { res.status(400).json({ error: err.message }); }
-});
-
-app.delete('/api/tracks/:id', async (req, res) => {
-  try {
-    await Track.findByIdAndDelete(req.params.id);
-    res.json({ message: "Track deleted!" });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-
-app.get('/api/videos', async (req, res) => {
-  try { res.json(await Video.find()); } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.post('/api/videos', async (req, res) => {
+const handlePostVideo = async (req, res) => {
   try {
     const { title, videoId, youtubeId: oldYoutubeId } = req.body;
     let incomingUrl = videoId || oldYoutubeId;
@@ -62,26 +34,51 @@ app.post('/api/videos', async (req, res) => {
     await newVideo.save();
     res.status(201).json(newVideo);
   } catch (err) { res.status(400).json({ error: err.message }); }
-});
+};
 
-app.delete('/api/videos/:id', async (req, res) => {
+
+const handlePostTrack = async (req, res) => {
   try {
-    await Video.findByIdAndDelete(req.params.id);
-    res.json({ message: "Video deleted!" });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
+    const { title, url } = req.body;
+    if (!title || !url) {
+      return res.status(400).json({ error: "اسم التراك ورابط الـ MP3 مطلوبين" });
+    }
+    const newTrack = new Track({ title, url });
+    await newTrack.save();
+    res.status(201).json(newTrack);
+  } catch (err) { res.status(400).json({ error: err.message }); }
+};
 
 
-app.post('/api/admin/login', async (req, res) => {
+app.get('/api/videos', async (req, res) => { try { res.json(await Video.find()); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.get('/api/api/videos', async (req, res) => { try { res.json(await Video.find()); } catch (err) { res.status(500).json({ error: err.message }); } });
+
+app.post('/api/videos', handlePostVideo);
+app.post('/api/api/videos', handlePostVideo); 
+
+
+app.get('/api/tracks', async (req, res) => { try { res.json(await Track.find()); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.get('/api/api/tracks', async (req, res) => { try { res.json(await Track.find()); } catch (err) { res.status(500).json({ error: err.message }); } });
+
+app.post('/api/tracks', handlePostTrack);
+app.post('/api/api/tracks', handlePostTrack);
+
+
+app.delete('/api/tracks/:id', async (req, res) => { try { await Track.findByIdAndDelete(req.params.id); res.json({ message: "Track deleted!" }); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.delete('/api/api/tracks/:id', async (req, res) => { try { await Track.findByIdAndDelete(req.params.id); res.json({ message: "Track deleted!" }); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.delete('/api/videos/:id', async (req, res) => { try { await Video.findByIdAndDelete(req.params.id); res.json({ message: "Video deleted!" }); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.delete('/api/api/videos/:id', async (req, res) => { try { await Video.findByIdAndDelete(req.params.id); res.json({ message: "Video deleted!" }); } catch (err) { res.status(500).json({ error: err.message }); } });
+
+
+const handleLogin = async (req, res) => {
   const { email, password } = req.body;
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
-
-  if (email === adminEmail && password === adminPassword) {
+  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
     return res.json({ success: true, token: 'biko_fix_token_2026' });
   }
   return res.status(401).json({ message: 'البيانات غير صحيحة' });
-});
+};
+app.post('/api/admin/login', handleLogin);
+app.post('/api/api/admin/login', handleLogin);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
