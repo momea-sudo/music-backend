@@ -20,10 +20,16 @@ app.get('/api/tracks', async (req, res) => {
 
 app.post('/api/tracks', async (req, res) => {
   try {
-    const newTrack = new Track(req.body);
+    const { title, url } = req.body;
+    if (!title || !url) {
+      return res.status(400).json({ error: "اسم التراك ورابط الـ MP3 مطلوبين" });
+    }
+    const newTrack = new Track({ title, url });
     await newTrack.save();
     res.status(201).json(newTrack);
-  } catch (err) { res.status(400).json({ error: err.message }); }
+  } catch (err) { 
+    res.status(400).json({ error: err.message }); 
+  }
 });
 
 app.delete('/api/tracks/:id', async (req, res) => {
@@ -39,12 +45,30 @@ app.get('/api/videos', async (req, res) => {
 
 app.post('/api/videos', async (req, res) => {
   try {
-    const { title, youtubeId } = req.body;
-    const thumbnail = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
-    const newVideo = new Video({ title, youtubeId, thumbnail });
+    const { title, videoId, youtubeId: oldYoutubeId } = req.body;
+    
+    
+    let incomingUrl = videoId || oldYoutubeId;
+
+    if (!incomingUrl || !title) {
+      return res.status(400).json({ error: "عنوان الفيديو والرابط مطلوبين" });
+    }
+
+    
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = incomingUrl.match(regExp);
+    
+    
+    const finalYoutubeId = (match && match[2].length === 11) ? match[2] : incomingUrl;
+
+    const thumbnail = `https://img.youtube.com/vi/${finalYoutubeId}/hqdefault.jpg`;
+    const newVideo = new Video({ title, youtubeId: finalYoutubeId, thumbnail });
+    
     await newVideo.save();
     res.status(201).json(newVideo);
-  } catch (err) { res.status(400).json({ error: err.message }); }
+  } catch (err) { 
+    res.status(400).json({ error: err.message }); 
+  }
 });
 
 app.delete('/api/videos/:id', async (req, res) => {
