@@ -14,11 +14,33 @@ if (!mongoURI) {
   console.error("🚨 تحذير قاتل: السيرفر مش شايف متغير MONGO_URI في الإعدادات!");
 }
 
+// 🌐 الاتصال بقاعدة البيانات
 mongoose.connect(mongoURI)
   .then(() => console.log('🚀 تم الاتصال بنجاح بقاعدة بيانات MongoDB Atlas!'))
   .catch(err => {
     console.error('❌ فشل الاتصال بالمونجو:', err.message);
   });
+
+// ==========================================
+// 🏗️ [إضافة التعديل الأساسي] تعاريف جداول قاعدة البيانات (Schemas & Models)
+// ==========================================
+
+const TrackSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  url: { type: String, required: true }
+});
+const Track = mongoose.model('Track', TrackSchema);
+
+const VideoSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  youtubeId: { type: String, required: true },
+  thumbnail: { type: String, required: true }
+});
+const Video = mongoose.model('Video', VideoSchema);
+
+// ==========================================
+// 🛣️ الـ Routes (المسارات) الخاصة بالتراكات والفيديوهات
+// ==========================================
 
 app.get('/api/tracks', async (req, res) => {
   try { 
@@ -61,12 +83,10 @@ app.get('/api/videos', async (req, res) => {
   }
 });
 
-
 app.post('/api/videos', async (req, res) => {
   try {
     const { title, videoId, youtubeId, url } = req.body;
     
-   
     let incomingUrl = videoId || youtubeId || url;
 
     if (!incomingUrl || !title) {
@@ -75,7 +95,6 @@ app.post('/api/videos', async (req, res) => {
 
     let finalYoutubeId = incomingUrl.trim();
 
-    
     if (finalYoutubeId.includes('v=')) {
       finalYoutubeId = finalYoutubeId.split('v=')[1].split('&')[0].split('?')[0];
     } else if (finalYoutubeId.includes('youtu.be/')) {
@@ -86,13 +105,11 @@ app.post('/api/videos', async (req, res) => {
       finalYoutubeId = finalYoutubeId.split('shorts/')[1].split('?')[0];
     }
 
-    
     if (!finalYoutubeId || finalYoutubeId.length !== 11) {
       return res.status(400).json({ error: "لم نتمكن من التعرف على كود الفيديو، تأكد من الرابط" });
     }
 
     const thumbnail = `https://img.youtube.com/vi/${finalYoutubeId}/hqdefault.jpg`;
-    
     
     const newVideo = new Video({ 
       title, 
