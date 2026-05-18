@@ -8,12 +8,17 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/biko_music')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+const mongoURI = process.env.MONGO_URI;
 
-const Track = mongoose.model('Track', new mongoose.Schema({ title: String, url: String }));
-const Video = mongoose.model('Video', new mongoose.Schema({ title: String, youtubeId: String, thumbnail: String }));
+if (!mongoURI) {
+  console.error("🚨 تحذير قاتل: السيرفر مش شايف متغير MONGO_URI في الإعدادات!");
+}
+
+mongoose.connect(mongoURI)
+  .then(() => console.log('🚀 تم الاتصال بنجاح بقاعدة بيانات MongoDB Atlas!'))
+  .catch(err => {
+    console.error('❌ فشل الاتصال بالمونجو:', err.message);
+  });
 
 app.get('/api/tracks', async (req, res) => {
   try { 
