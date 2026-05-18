@@ -65,6 +65,8 @@ app.get('/api/videos', async (req, res) => {
 app.post('/api/videos', async (req, res) => {
   try {
     const { title, videoId, youtubeId, url } = req.body;
+    
+   
     let incomingUrl = videoId || youtubeId || url;
 
     if (!incomingUrl || !title) {
@@ -73,37 +75,30 @@ app.post('/api/videos', async (req, res) => {
 
     let finalYoutubeId = incomingUrl.trim();
 
-   
+    
     if (finalYoutubeId.includes('v=')) {
       finalYoutubeId = finalYoutubeId.split('v=')[1].split('&')[0].split('?')[0];
     } else if (finalYoutubeId.includes('youtu.be/')) {
       finalYoutubeId = finalYoutubeId.split('youtu.be/')[1].split('?')[0];
     } else if (finalYoutubeId.includes('embed/')) {
       finalYoutubeId = finalYoutubeId.split('embed/')[1].split('?')[0];
+    } else if (finalYoutubeId.includes('shorts/')) {
+      finalYoutubeId = finalYoutubeId.split('shorts/')[1].split('?')[0];
     }
 
     
-    if (finalYoutubeId.length !== 11) {
-      return res.status(400).json({ error: "لم نتمكن من التعرف على كود الفيديو، تأكد من الرابط" });
-    }
-
-    const thumbnail = `https://img.youtube.com/vi/${finalYoutubeId}/hqdefault.jpg`;
-    const newVideo = new Video({ title, youtubeId: finalYoutubeId, thumbnail });
-    
-    await newVideo.save();
-    res.status(201).json(newVideo);
-  } catch (err) { 
-    res.status(400).json({ error: err.message }); 
-  }
-});
-
-  
     if (!finalYoutubeId || finalYoutubeId.length !== 11) {
       return res.status(400).json({ error: "لم نتمكن من التعرف على كود الفيديو، تأكد من الرابط" });
     }
 
     const thumbnail = `https://img.youtube.com/vi/${finalYoutubeId}/hqdefault.jpg`;
-    const newVideo = new Video({ title, youtubeId: finalYoutubeId, thumbnail });
+    
+    
+    const newVideo = new Video({ 
+      title, 
+      youtubeId: finalYoutubeId, 
+      thumbnail 
+    });
     
     await newVideo.save();
     res.status(201).json(newVideo);
