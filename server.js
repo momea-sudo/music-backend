@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const mongoURI = process.env.MONGO_URI;
+const mongoURI = process.env.MONGO_URI || "mongodb+srv://hassanmomea_db_user:ma8brGMHGLoXR6m2@cluster0.n7wcxlr.mongodb.net/biko_music?retryWrites=true&w=majority&appName=Cluster0";
 
 if (!mongoURI) {
   console.error("🚨 تحذير قاتل: السيرفر مش شايف متغير MONGO_URI في الإعدادات!");
